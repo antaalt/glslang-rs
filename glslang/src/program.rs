@@ -195,6 +195,7 @@ void main() {
             &source,
             ShaderStage::Fragment,
             &CompilerOptions::default(),
+            &[],
             None,
         )
             .expect("target");
@@ -229,6 +230,7 @@ void main() {
             &source,
             ShaderStage::Fragment,
             &CompilerOptions::default(),
+            &[],
             None,
         )
         .expect("target");
@@ -284,6 +286,7 @@ void main() {
                 messages: ShaderMessage::DEBUG_INFO | ShaderMessage::DEFAULT,
                 version_profile: Some((890, GlslProfile::None)),
             },
+            &[],
             None,
         )
         .expect("target");
@@ -318,6 +321,7 @@ void main() {
                 messages: ShaderMessage::DEBUG_INFO | ShaderMessage::DEFAULT,
                 version_profile: None,
             },
+            &[],
             None,
         )
         .expect("target");
@@ -369,6 +373,7 @@ void main()
             &fragment,
             ShaderStage::Fragment,
             &CompilerOptions::default(),
+            &[],
             None,
         )
         .expect("target");
@@ -380,6 +385,7 @@ void main()
             &vertex,
             ShaderStage::Vertex,
             &CompilerOptions::default(),
+            &[],
             None,
         )
         .expect("target");

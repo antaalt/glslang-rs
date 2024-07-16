@@ -1,10 +1,11 @@
 use crate::ctypes::{ResourceType, ShaderOptions, ShaderStage};
 use crate::error::GlslangError;
 use crate::error::GlslangError::ParseError;
-use crate::include::IncludeCallback;
+use crate::include::IncludeHandler;
 use crate::{include, limits, limits::ResourceLimits, Compiler};
 use glslang_sys as sys;
 use glslang_sys::glsl_include_callbacks_s;
+use std::collections::HashMap;
 use std::ffi::{c_void, CStr, CString};
 use std::ops::BitOr;
 use std::ptr::NonNull;
@@ -31,6 +32,17 @@ impl<'a> Shader<'a> {
             is_spirv: input.input.target_language == sys::glslang_target_language_t::SPIRV,
             _compiler,
         };
+
+        let preamble = input.defines
+            .iter()
+            .map(|(k, v)| format!("#define {} {}\n", k, v.clone().unwrap_or_default()))
+            .collect::<Vec<String>>()
+            .join("");
+
+        let cpreamble = CString::new(preamble).expect("Invalid preamble format");
+        unsafe {
+            sys::glslang_shader_set_preamble(shader.handle.as_ptr(), cpreamble.as_ptr());
+        }
 
         unsafe {
             if sys::glslang_shader_preprocess(shader.handle.as_ptr(), &input.input) == 0 {
@@ -82,17 +94,6 @@ impl<'a> Shader<'a> {
     #[allow(unused)]
     fn glsl_version(&mut self, version: i32) {
         unsafe { sys::glslang_shader_set_glsl_version(self.handle.as_ptr(), version) }
-    }
-
-    /// Set the preamble of the shader source.
-    /// This doesn't actually seem to do anything and has the potential for unsoundness.
-    #[doc(hidden)]
-    #[allow(unused)]
-    fn preamble(&mut self, preamble: String) {
-        let cstr = CString::new(preamble).expect("rust string should not have interior null bytes");
-        unsafe {
-            sys::glslang_shader_set_preamble(self.handle.as_ptr(), cstr.as_ptr());
-        }
     }
 
     fn get_log(&self) -> String {
@@ -171,6 +172,7 @@ void main() {
             &source,
             ShaderStage::Fragment,
             &CompilerOptions::default(),
+            &[],
             None,
         )
         .expect("target");
@@ -243,6 +245,7 @@ pub struct ShaderInput<'a> {
     // Keep these alive.
     _source: &'a ShaderSource,
     _resource: &'a sys::glslang_resource_t,
+    pub(crate) defines: HashMap<String, Option<String>>,
     pub(crate) input: sys::glslang_input_t,
 }
 
@@ -477,9 +480,10 @@ impl<'a> ShaderInput<'a> {
         source: &'a ShaderSource,
         stage: ShaderStage,
         options: &CompilerOptions,
-        includer: Option<IncludeCallback>,
+        defines: &[(&str, Option<&str>)],
+        include_handler: Option<&'a mut dyn IncludeHandler>,
     ) -> Result<Self, GlslangError> {
-        Self::new_with_limits(source, &limits::DEFAULT_LIMITS, stage, options, includer)
+        Self::new_with_limits(source, &limits::DEFAULT_LIMITS, stage, options, defines, include_handler)
     }
 
 
@@ -489,7 +493,8 @@ impl<'a> ShaderInput<'a> {
         resource: &'a ResourceLimits,
         stage: ShaderStage,
         options: &CompilerOptions,
-        includer: Option<IncludeCallback>,
+        defines: &[(&str, Option<&str>)],
+        include_handler: Option<&'a mut dyn IncludeHandler>,
     ) -> Result<Self, GlslangError> {
         let profile = options
             .version_profile
@@ -499,13 +504,14 @@ impl<'a> ShaderInput<'a> {
             options.target.verify_glsl_profile(profile.as_ref())?;
         }
 
-        let callbacks_ctx = includer.map_or(core::ptr::null_mut(), |callback| {
+        let callbacks_ctx = include_handler.map_or(core::ptr::null_mut(), |callback| {
             Box::into_raw(Box::new(callback))
         });
-
+        
         Ok(Self {
             _source: source,
             _resource: &resource.0,
+            defines: defines.iter().map(|v| (String::from(v.0), v.1.map(|s| s.to_string()))).collect(),
             input: sys::glslang_input_t {
                 language: options.source_language,
                 stage,
