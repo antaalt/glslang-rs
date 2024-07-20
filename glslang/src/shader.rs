@@ -432,6 +432,8 @@ impl ShaderMessage {
     pub const HLSL_DX9_COMPATIBLE: ShaderMessage = ShaderMessage(sys::glslang_messages_t::HLSL_DX9_COMPATIBLE.0);
     pub const BUILTIN_SYMBOL_TABLE: ShaderMessage = ShaderMessage(sys::glslang_messages_t::BUILTIN_SYMBOL_TABLE.0);
     pub const ENHANCED: ShaderMessage = ShaderMessage(sys::glslang_messages_t::ENHANCED.0);
+    pub const ABSOLUTE_PATH: ShaderMessage = ShaderMessage(sys::glslang_messages_t::ABSOLUTE_PATH.0);
+    pub const DISPLAY_ERROR_COLUMN: ShaderMessage = ShaderMessage(sys::glslang_messages_t::DISPLAY_ERROR_COLUMN.0);
 
     pub fn convert(&self) -> sys::glslang_messages_t {
         sys::glslang_messages_t(self.0)
