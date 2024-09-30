@@ -294,6 +294,82 @@ pub struct glslang_program_s {
 pub type glslang_program_t = glslang_program_s;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct glslang_mapper_s {
+    _unused: [u8; 0],
+}
+pub type glslang_mapper_t = glslang_mapper_s;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct glslang_resolver_s {
+    _unused: [u8; 0],
+}
+pub type glslang_resolver_t = glslang_resolver_s;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct glslang_version_s {
+    pub major: ::std::os::raw::c_int,
+    pub minor: ::std::os::raw::c_int,
+    pub patch: ::std::os::raw::c_int,
+    pub flavor: *const ::std::os::raw::c_char,
+}
+#[test]
+fn bindgen_test_layout_glslang_version_s() {
+    const UNINIT: ::std::mem::MaybeUninit<glslang_version_s> = ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<glslang_version_s>(),
+        24usize,
+        concat!("Size of: ", stringify!(glslang_version_s))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<glslang_version_s>(),
+        8usize,
+        concat!("Alignment of ", stringify!(glslang_version_s))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).major) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(glslang_version_s),
+            "::",
+            stringify!(major)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).minor) as usize - ptr as usize },
+        4usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(glslang_version_s),
+            "::",
+            stringify!(minor)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).patch) as usize - ptr as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(glslang_version_s),
+            "::",
+            stringify!(patch)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).flavor) as usize - ptr as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(glslang_version_s),
+            "::",
+            stringify!(flavor)
+        )
+    );
+}
+pub type glslang_version_t = glslang_version_s;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct glslang_limits_s {
     pub non_inductive_for_loops: bool,
     pub while_loops: bool,
@@ -2082,6 +2158,7 @@ pub struct glslang_spv_options_s {
     pub emit_nonsemantic_shader_debug_info: bool,
     pub emit_nonsemantic_shader_debug_source: bool,
     pub compile_only: bool,
+    pub optimize_allow_expanded_id_bound: bool,
 }
 #[test]
 fn bindgen_test_layout_glslang_spv_options_s() {
@@ -2090,7 +2167,7 @@ fn bindgen_test_layout_glslang_spv_options_s() {
     let ptr = UNINIT.as_ptr();
     assert_eq!(
         ::std::mem::size_of::<glslang_spv_options_s>(),
-        9usize,
+        10usize,
         concat!("Size of: ", stringify!(glslang_spv_options_s))
     );
     assert_eq!(
@@ -2193,8 +2270,23 @@ fn bindgen_test_layout_glslang_spv_options_s() {
             stringify!(compile_only)
         )
     );
+    assert_eq!(
+        unsafe {
+            ::std::ptr::addr_of!((*ptr).optimize_allow_expanded_id_bound) as usize - ptr as usize
+        },
+        9usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(glslang_spv_options_s),
+            "::",
+            stringify!(optimize_allow_expanded_id_bound)
+        )
+    );
 }
 pub type glslang_spv_options_t = glslang_spv_options_s;
+extern "C" {
+    pub fn glslang_get_version(version: *mut glslang_version_t);
+}
 extern "C" {
     pub fn glslang_initialize_process() -> ::std::os::raw::c_int;
 }
@@ -2241,6 +2333,26 @@ extern "C" {
     );
 }
 extern "C" {
+    pub fn glslang_shader_set_default_uniform_block_set_and_binding(
+        shader: *mut glslang_shader_t,
+        set: ::std::os::raw::c_uint,
+        binding: ::std::os::raw::c_uint,
+    );
+}
+extern "C" {
+    pub fn glslang_shader_set_default_uniform_block_name(
+        shader: *mut glslang_shader_t,
+        name: *const ::std::os::raw::c_char,
+    );
+}
+extern "C" {
+    pub fn glslang_shader_set_resource_set_binding(
+        shader: *mut glslang_shader_t,
+        bindings: *const *const ::std::os::raw::c_char,
+        num_bindings: ::std::os::raw::c_uint,
+    );
+}
+extern "C" {
     pub fn glslang_shader_preprocess(
         shader: *mut glslang_shader_t,
         input: *const glslang_input_t,
@@ -2256,6 +2368,12 @@ extern "C" {
     pub fn glslang_shader_get_preprocessed_code(
         shader: *mut glslang_shader_t,
     ) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    pub fn glslang_shader_set_preprocessed_code(
+        shader: *mut glslang_shader_t,
+        code: *const ::std::os::raw::c_char,
+    );
 }
 extern "C" {
     pub fn glslang_shader_get_info_log(
@@ -2304,6 +2422,13 @@ extern "C" {
     pub fn glslang_program_map_io(program: *mut glslang_program_t) -> ::std::os::raw::c_int;
 }
 extern "C" {
+    pub fn glslang_program_map_io_with_resolver_and_mapper(
+        program: *mut glslang_program_t,
+        resolver: *mut glslang_resolver_t,
+        mapper: *mut glslang_mapper_t,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
     pub fn glslang_program_SPIRV_generate(program: *mut glslang_program_t, stage: glslang_stage_t);
 }
 extern "C" {
@@ -2341,4 +2466,19 @@ extern "C" {
     pub fn glslang_program_get_info_debug_log(
         program: *mut glslang_program_t,
     ) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    pub fn glslang_glsl_mapper_create() -> *mut glslang_mapper_t;
+}
+extern "C" {
+    pub fn glslang_glsl_mapper_delete(mapper: *mut glslang_mapper_t);
+}
+extern "C" {
+    pub fn glslang_glsl_resolver_create(
+        program: *mut glslang_program_t,
+        stage: glslang_stage_t,
+    ) -> *mut glslang_resolver_t;
+}
+extern "C" {
+    pub fn glslang_glsl_resolver_delete(resolver: *mut glslang_resolver_t);
 }
