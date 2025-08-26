@@ -1,4 +1,4 @@
-use std::sync::OnceLock;
+use std::{ffi::CStr, mem::MaybeUninit, sync::OnceLock};
 
 mod ctypes;
 
@@ -16,6 +16,13 @@ static COMPILER_INSTANCE: OnceLock<Option<Compiler>> = OnceLock::new();
 
 /// A handle representing the glslang compiler instance.
 pub struct Compiler;
+
+pub struct Version {
+    pub major: i32,
+    pub minor: i32,
+    pub patch: i32,
+    pub flavor: &'static str
+}
 
 pub use crate::ctypes::*;
 
@@ -35,6 +42,20 @@ impl Compiler {
                 Some(Self)
             })
             .as_ref()
+    }
+
+    pub fn version() -> Version {
+        let mut version : MaybeUninit<glslang_sys::glslang_version_t> = MaybeUninit::uninit();
+        let version = unsafe { 
+            glslang_sys::glslang_get_version(version.as_mut_ptr());
+            version.assume_init()
+        };
+        Version { 
+            major: version.major, 
+            minor: version.minor, 
+            patch: version.patch, 
+            flavor: unsafe { CStr::from_ptr(version.flavor).to_str().unwrap() }
+        }
     }
 
     /// Create a [`Shader`](crate::Shader) with the given inputs.
