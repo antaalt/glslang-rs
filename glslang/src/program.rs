@@ -732,6 +732,7 @@ void main() {
         shader.default_uniform_block_name("uniform");
         shader.default_uniform_block_set_and_binding(0, 0);
         shader.entry_point("main");
+        shader.source_entry_point("main");
         shader.glsl_version(100);
         shader.invert_y(true);
         shader.options(sys::glslang_shader_options_t::DEFAULT);

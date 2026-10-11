@@ -215,6 +215,12 @@ impl<'shader, 'input> ShaderBuilder<'shader, 'input> {
         // (`TIntermediate::setEntryPointName`), so the allocation can be dropped here.
         unsafe { sys::glslang_shader_set_entry_point(self.shader.handle.as_ptr(), centry_point.as_ptr()) }
     }
+    
+    /// Set shader source entry point.
+    pub fn source_entry_point(&mut self, source_entry_point: &str) {
+        let csource_entry_point = CString::new(source_entry_point).expect("Invalid source entry point format");
+        unsafe { sys::glslang_shader_set_source_entry_point(self.shader.handle.as_ptr(), csource_entry_point.as_ptr()) }
+    }
 
     /// Set shader invert y.
     pub fn invert_y(&mut self, invert_y: bool) {

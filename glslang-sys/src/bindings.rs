@@ -480,6 +480,12 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
+    pub fn glslang_shader_set_source_entry_point(
+        shader: *mut glslang_shader_t,
+        s: *const ::std::os::raw::c_char,
+    );
+}
+unsafe extern "C" {
     pub fn glslang_shader_set_entry_point(
         shader: *mut glslang_shader_t,
         s: *const ::std::os::raw::c_char,
